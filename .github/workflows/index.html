@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados Elecciones 2026 - Análisis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <header class="mb-10 border-b pb-4">
+            <h1 class="text-3xl font-bold text-blue-900">Resultados Presidenciales 2026</h1>
+            <p class="text-gray-600 italic">Análisis técnico basado en datos oficiales de la ONPE</p>
+            <div id="reloj" class="text-sm mt-2 font-mono text-blue-600">Actualizando...</div>
+        </header>
+
+        <section class="bg-white p-6 rounded-lg shadow-sm border mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Resumen de Votación</h2>
+            <canvas id="graficoVotos"></canvas>
+        </section>
+
+        <section class="overflow-x-auto">
+            <table class="w-full text-left border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+                <thead class="bg-blue-900 text-white">
+                    <tr>
+                        <th class="p-4">Candidato / Organización</th>
+                        <th class="p-4 text-right">Votos</th>
+                        <th class="p-4 text-right">% Votos Válidos</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-cuerpo">
+                    </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+        async function cargarDatos() {
+            try {
+                const response = await fetch('resultados.json');
+                const data = await response.json();
+                
+                // Aquí extraemos los datos que nos envía la ONPE
+                const candidatos = data.results.slice(0, 6); // Top 6
+                const labels = candidatos.map(c => c.nombres + " " + c.apellidos);
+                const votos = candidatos.map(c => parseInt(c.votos_validos));
+                
+                // Actualizamos reloj
+                document.getElementById('reloj').innerText = "Última actualización de la ONPE: " + data.metadata.fecha_actualizacion;
+
+                // Dibujar Gráfico
+                new Chart(document.getElementById('graficoVotos'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '% Votos Válidos',
+                            data: votos,
+                            backgroundColor: '#1e3a8a',
+                            borderRadius: 5
+                        }]
+                    },
+                    options: { indexAxis: 'y', responsive: true }
+                });
+
+                // Llenar Tabla
+                const tabla = document.getElementById('tabla-cuerpo');
+                candidatos.forEach(c => {
+                    const fila = `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-4 font-medium">${c.nombres} ${c.apellidos}<br><span class="text-xs text-gray-500">${c.organizacion}</span></td>
+                            <td class="p-4 text-right font-mono">${parseInt(c.votos_totales).toLocaleString()}</td>
+                            <td class="p-4 text-right font-bold text-blue-700">${c.votos_validos}%</td>
+                        </tr>`;
+                    tabla.innerHTML += fila;
+                });
+            } catch (e) {
+                console.log("Esperando que el robot genere el primer archivo de datos...");
+            }
+        }
+        cargarDatos();
+    </script>
+</body>
+</html>
