@@ -1,0 +1,22 @@
+name: Robot ONPE
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Se ejecuta cada 30 min
+  workflow_dispatch: # Permite que tú lo ejecutes a mano si quieres
+
+jobs:
+  descargar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Descargar Datos
+        run: |
+          # Conectamos con el servidor de la ONPE
+          curl -H "Accept: application/json" "https://resultadoelectoral.onpe.gob.pe/api/v1/presidencial/nacional" -o resultados.json
+      - name: Guardar en el Almacén
+        run: |
+          git config --global user.name "Robot ONPE"
+          git config --global user.email "robot@github.com"
+          git add resultados.json
+          git commit -m "Actualización: $(date)" || exit 0
+          git push
